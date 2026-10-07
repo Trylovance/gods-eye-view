@@ -39,10 +39,19 @@ export function createBrowserViteConfig({
         deny: ['.env', '.env.*', '*.{crt,pem}', '**/.git/**', '**/ENVIRONMENT'],
       },
       // These headers protect the document containing Provider Settings.
-      headers: {
-        'X-Frame-Options': 'DENY',
-        'Content-Security-Policy': "frame-ancestors 'none'",
-      },
+      // northlight:embed -- GEV_EMBED_ORIGINS="http://localhost:8765,..." lets exactly
+      // those origins frame this app (the Northlight cockpit). Unset keeps DENY.
+      headers: process.env.GEV_EMBED_ORIGINS
+        ? {
+            'Content-Security-Policy': `frame-ancestors 'self' ${process.env.GEV_EMBED_ORIGINS.split(',')
+              .map((o) => o.trim())
+              .filter(Boolean)
+              .join(' ')}`,
+          }
+        : {
+            'X-Frame-Options': 'DENY',
+            'Content-Security-Policy': "frame-ancestors 'none'",
+          },
     },
     define: {
       'import.meta.env.GOOGLE_MAPS_API_KEY': JSON.stringify(googleApiKey),
